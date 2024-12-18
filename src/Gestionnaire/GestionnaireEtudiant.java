@@ -17,7 +17,8 @@ public class GestionnaireEtudiant {
             System.out.println("1: Voir les formations disponibles");
             System.out.println("2: S'inscrire à une formation");
             System.out.println("3: Voir formation inscrits");
-            System.out.println("4: Déconnexion");
+            System.out.println("4: Rechercher des formations");
+            System.out.println("5: Déconnexion");
 
             int choix = 0;
             try {
@@ -38,6 +39,9 @@ public class GestionnaireEtudiant {
                 	voirFormation(idEtudiant);
                 	break;
                 case 4:
+                	rechercherFormation(sc);
+                	break;
+                case 5:
                     System.out.println("Déconnexion réussie !");
                     return;
                 default:
@@ -54,7 +58,7 @@ public class GestionnaireEtudiant {
 
             System.out.println("Formations disponibles :");
             while (resultSet.next()) {
-                System.out.println("ID: " + resultSet.getInt("id") +
+                System.out.println("ID: " + resultSet.getInt("id")+
                                    " | Nom: " + resultSet.getString("titre") +
                                    " | Description: " + resultSet.getString("description") +
                                    " | Prix: " + resultSet.getDouble("prix"));
@@ -135,4 +139,35 @@ private static void inscritFormation(Scanner sc, int idEtudiant) {
 }
 
  
+
+private static void rechercherFormation(Scanner sc) {
+    System.out.println("Entrez un mot-clé pour rechercher des formations :");
+    String keyword = sc.nextLine();
+
+    try (Connection connection = DatabaseConnection.getConnection()) {
+        String query = "SELECT * FROM formations WHERE titre LIKE ? OR description LIKE ?";
+        PreparedStatement preparedStatement = connection.prepareStatement(query);
+        preparedStatement.setString(1, "%" + keyword + "%");
+        preparedStatement.setString(2, "%" + keyword + "%");
+        ResultSet resultSet = preparedStatement.executeQuery();
+
+        System.out.println("Résultats de la recherche :");
+        boolean found = false;
+        while (resultSet.next()) {
+            found = true;
+            System.out.println("ID: " + resultSet.getInt("id") +
+                               " | Nom: " + resultSet.getString("titre") +
+                               " | Description: " + resultSet.getString("description") +
+                               " | Prix: " + resultSet.getDouble("prix"));
+        }
+
+        if (!found) {
+            System.out.println("Aucune formation ne correspond à votre recherche.");
+        }
+    } catch (Exception e) {
+        System.out.println("Une erreur est survenue : " + e.getMessage());
+    }
+}
+
+
 }

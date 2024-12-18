@@ -19,7 +19,8 @@ public static void gestionnaireFormateur(Scanner sc, int idFormateur) {
             System.out.println("3: Voir mes formations");
             System.out.println("4: Modifier Formation");
             System.out.println("5: Supprimer Formation");
-            System.out.println("6: Déconnexion");
+            System.out.println("6: Voir les statistiques des formations");
+            System.out.println("7: Déconnexion");
 
             int choix = 0;
             try {
@@ -47,6 +48,9 @@ public static void gestionnaireFormateur(Scanner sc, int idFormateur) {
                     supprimerFormation(idFormateur);
                     break;
                 case 6:
+                	afficherStatistiquesFormateur(idFormateur);
+                	break;
+                case 7:
                     System.out.println("Déconnexion réussie !");
                     return; // Exit the method
                 default:
@@ -274,6 +278,39 @@ private static void voirFormationDisponible() {
                                "Nom: " + resultSet.getString("titre") +
                                " | Description: " + resultSet.getString("description") +
                                " | Prix: " + resultSet.getDouble("prix"));
+        }
+    } catch (Exception e) {
+        System.out.println("Une erreur est survenue : " + e.getMessage());
+    }
+}
+
+
+private static void afficherStatistiquesFormateur(int idFormateur) {
+    try (Connection connection = DatabaseConnection.getConnection()) {
+        String query = """
+            SELECT f.titre, 
+                   COUNT(i.etudiant_id) AS nombre_inscriptions, 
+                   SUM(f.prix) AS revenus
+            FROM formations f
+            LEFT JOIN inscriptions i ON f.id = i.formation_id
+            WHERE f.formateur_id = ?
+            GROUP BY f.id
+        """;
+        PreparedStatement preparedStatement = connection.prepareStatement(query);
+        preparedStatement.setInt(1, idFormateur);
+        ResultSet resultSet = preparedStatement.executeQuery();
+
+        System.out.println("Statistiques pour vos formations :");
+        boolean found = false;
+        while (resultSet.next()) {
+            found = true;
+            System.out.println("Formation : " + resultSet.getString("titre") +
+                               " | Inscriptions : " + resultSet.getInt("nombre_inscriptions") +
+                               " | Revenus générés : " + resultSet.getDouble("revenus") + " €");
+        }
+
+        if (!found) {
+            System.out.println("Aucune donnée trouvée pour vos formations.");
         }
     } catch (Exception e) {
         System.out.println("Une erreur est survenue : " + e.getMessage());
